@@ -36,11 +36,11 @@ init_db()
 def add_expense(date: str, amount: float, category: str, subcategory: str = "", description: str = ""):
     """Add a new expense to the database."""
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("""
+        cursor = conn.execute("""
             INSERT INTO expenses (date, amount, category, subcategory, description)
             VALUES (?, ?, ?, ?, ?)
         """, (date, amount, category, subcategory, description))
-        return {"Status":"Ok", "id": conn.lastrowid}
+        return {"Status":"Ok", "id": cursor.lastrowid}
 
 @mcp.tool()
 def list_expenses():
