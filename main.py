@@ -2,8 +2,18 @@ from fastmcp import FastMCP
 import os
 import sqlite3
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "expense.db")
+HOME_DIR = os.path.expanduser("~")
+APP_DIR = os.path.join(HOME_DIR, ".expense_tracker")
+os.makedirs(APP_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(APP_DIR, "expense.db")
+# CATEGORIES_PATH = os.path.join(APP_DIR, "categories.json")
+
+# DB_PATH = os.path.join(os.path.dirname(__file__), "expense.db")
 CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
+
+print(f"Database path: {DB_PATH}")
+print(f"Categories path: {CATEGORIES_PATH}")
 
 mcp = FastMCP("Expense Tracker")
 
@@ -30,7 +40,7 @@ def add_expense(date: str, amount: float, category: str, subcategory: str = "", 
             INSERT INTO expenses (date, amount, category, subcategory, description)
             VALUES (?, ?, ?, ?, ?)
         """, (date, amount, category, subcategory, description))
-    return {"Status":"Ok", "id": conn.lastrowid}
+        return {"Status":"Ok", "id": conn.lastrowid}
 
 @mcp.tool()
 def list_expenses():
@@ -38,7 +48,7 @@ def list_expenses():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute("SELECT id, date, amount, category, subcategory, description FROM expenses")
         cols = [d[0] for d in cursor.description]
-    return [dict(zip(cols, row)) for row in cursor.fetchall()]
+        return [dict(zip(cols, row)) for row in cursor.fetchall()]
 
 @mcp.tool()
 def summerize(start_date: str, end_date: str, category: str = None):
@@ -56,7 +66,7 @@ def summerize(start_date: str, end_date: str, category: str = None):
         query += "Group BY category ORDER BY category ASC"
         cursor = conn.execute(query, params)
         cols = [d[0] for d in cursor.description]
-    return [dict(zip(cols, row)) for row in cursor.fetchall()]
+        return [dict(zip(cols, row)) for row in cursor.fetchall()]
 
 @mcp.resource("expense://categories", mime_type="application/json")
 def categories():
@@ -66,4 +76,4 @@ def categories():
 
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="http", host="0.0.0.0", port=8000)
