@@ -81,7 +81,7 @@ async def summerize(start_date: str, end_date: str, category: str = None):
     try:
         async with aiosqlite.connect(DB_PATH) as conn:
             query = """
-                SELECT id, date, amount, category, subcategory, description
+                SELECT category, sum(amount) as total_amount
                 FROM expenses
                 WHERE date BETWEEN ? AND ?
             """
@@ -89,10 +89,10 @@ async def summerize(start_date: str, end_date: str, category: str = None):
             if category:
                 query += " AND category = ?"
                 params.append(category)
-        query += "Group BY category ORDER BY category ASC"
-        cursor = await conn.execute(query, params)
-        cols = [d[0] for d in cursor.description]
-        return [dict(zip(cols, row)) for row in await cursor.fetchall()]
+            query += "Group BY category ORDER BY category ASC"
+            cursor = await conn.execute(query, params)
+            cols = [d[0] for d in cursor.description]
+            return [dict(zip(cols, row)) for row in await cursor.fetchall()]
     except Exception as e:
         return {"Status":"Error", "message": f"Error while summarizing expenses: {str(e)}"}
     
